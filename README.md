@@ -334,3 +334,46 @@ console.log(searched)
   "total": 10
 }
 ```
+
+###### index.js ( search and filter by order )
+
+```js
+let searched = search({
+    data: data,
+    search: "c",
+
+}, {
+    searchCols: ['name'],
+    sort: {
+        key: "age",
+        order: 1 // 1/-1
+    }
+})
+
+console.log(searched)
+
+```
+###### output  
+```json
+
+{
+  "data": [
+    {
+      "name": "Captain Marvel",
+      "gender": "female",
+      "age": 29,
+      "DOB": "1990-11-05T13:15:30Z"
+    },
+    {
+      "name": "Captian America",
+      "gender": "male",
+      "age": 110,
+      "DOB": "1928-11-05T13:15:30Z"
+    }
+  ],
+  "filted": 2,
+  "total": 10
+}
+
+```
+

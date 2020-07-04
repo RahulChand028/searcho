@@ -13,11 +13,11 @@ let search = (source, searchOption) => {
         keys.forEach(key => {
             data = data.filter(element => {
                 if (!searchOption.filter[key].type) {
-                    return typeof searchOption.filter[key] == "object"
-                        ? String(searchOption.filter[key].value) == String(element[key])
-                        : searchOption.filter[key]
-                            ? String(element[key]) == String(searchOption.filter[key])
-                            : true;
+                    return typeof searchOption.filter[key] == "object" ?
+                        String(searchOption.filter[key].value) == String(element[key]) :
+                        searchOption.filter[key] ?
+                        String(element[key]) == String(searchOption.filter[key]) :
+                        true;
                 } else if (searchOption.filter[key].type.toLowerCase() == "number") {
                     if (typeof searchOption.filter[key].value == "number") {
                         return searchOption.filter[key].value == element[key];
@@ -67,9 +67,9 @@ let search = (source, searchOption) => {
     data = data.filter(element => {
         let points = 0;
 
-        (searchOption && searchOption.searchCols && searchOption.searchCols.length
-            ? searchOption.searchCols
-            : Object.keys(element)
+        (searchOption && searchOption.searchCols && searchOption.searchCols.length ?
+            searchOption.searchCols :
+            Object.keys(element)
         ).forEach(key => {
             if (String(element[key]).match(regex)) {
                 points++;
@@ -83,23 +83,31 @@ let search = (source, searchOption) => {
     });
     let filted = data.length;
     source.size = source.size ? source.size : 10;
-    data = source.page
-        ? data
-            .sort((a, b) => b[scoreKey] - a[scoreKey])
-            .map(element => {
-                delete element[scoreKey];
-                return element;
-            })
-            .slice(
-                source.page * source.size - source.size,
-                source.page * source.size
-            )
-        : data
-            .sort((a, b) => b[scoreKey] - a[scoreKey])
-            .map(element => {
-                delete element[scoreKey];
-                return element;
-            });
+    data = source.page ?
+        data
+        .sort((a, b) => b[scoreKey] - a[scoreKey])
+        .map(element => {
+            delete element[scoreKey];
+            return element;
+        })
+        .slice(
+            source.page * source.size - source.size,
+            source.page * source.size
+        ) :
+        data
+        .sort((a, b) => b[scoreKey] - a[scoreKey])
+        .map(element => {
+            delete element[scoreKey];
+            return element;
+        });
+    if (searchOption && searchOption.sort) {
+        if (typeof searchOption.sort == "string") {
+            data = data.sort((a, b) => a[searchOption.sort] > b[searchOption.sort] ? 1 : a[searchOption.sort] < b[searchOption.sort] ? -1 : 0);
+        } else if (searchOption && typeof searchOption.sort == "object" && searchOption.sort != null) {
+            data = data.sort((a, b) => a[searchOption.sort.key] > b[searchOption.sort.key] ? 1 : a[searchOption.sort.key] < b[searchOption.sort.key] ? -1 : 0);
+            searchOption.sort.order == -1 ? data.reverse() : '';
+        }
+    }
     return {
         data: data,
         filted: filted,
