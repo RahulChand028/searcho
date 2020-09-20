@@ -2,7 +2,7 @@ let search = (source, searchOption) => {
     if (!source.data.length) {
         return { data: [], filted: 0, total: 0 };
     }
-    const regex = new RegExp(source.search, "i");
+    const regex = new RegExp(source.search.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&"), "i");
     let data = JSON.parse(JSON.stringify(source.data));
     let scoreKey = "score";
     while (Object.keys(source.data[0]).includes(scoreKey)) {
