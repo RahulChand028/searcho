@@ -2,7 +2,7 @@ let search = (source, searchOption) => {
     if (!source.data.length) {
         return { data: [], filted: 0, total: 0 };
     }
-    const regex = new RegExp(source.search.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&"), "i");
+    const regex = new RegExp(String(source.search).replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&"), "i");
     let data = JSON.parse(JSON.stringify(source.data));
     let scoreKey = "score";
     while (Object.keys(source.data[0]).includes(scoreKey)) {
@@ -12,51 +12,61 @@ let search = (source, searchOption) => {
         let keys = Object.keys(searchOption.filter);
         keys.forEach(key => {
             data = data.filter(element => {
+                let valueToSearch = null;
+                if (key.split('.').length) {
+                    key.split('.').forEach(index => { valueToSearch = valueToSearch ? valueToSearch[index] : element[index] })
+                } else {
+                    valueToSearch = element[key];
+                }
                 if (!searchOption.filter[key].type) {
-                    return typeof searchOption.filter[key] == "object" ?
-                        String(searchOption.filter[key].value) == String(element[key]) :
+
+                    return valueToSearch ? typeof searchOption.filter[key] == "object" ?
+                        String(searchOption.filter[key].value) == String(valueToSearch) :
                         searchOption.filter[key] ?
-                        String(element[key]) == String(searchOption.filter[key]) :
-                        true;
+                            String(valueToSearch) == String(searchOption.filter[key]) :
+                            true : false;
                 } else if (searchOption.filter[key].type.toLowerCase() == "number") {
                     if (typeof searchOption.filter[key].value == "number") {
-                        return searchOption.filter[key].value == element[key];
+                        return searchOption.filter[key].value == valueToSearch;
                     } else {
                         if (
                             typeof searchOption.filter[key].min == "number" &&
-                            searchOption.filter[key].min > element[key]
+                            searchOption.filter[key].min > valueToSearch
                         ) {
                             return false;
                         }
                         if (
                             typeof searchOption.filter[key].max == "number" &&
-                            searchOption.filter[key].max < element[key]
+                            searchOption.filter[key].max < valueToSearch
                         ) {
                             return false;
                         }
                         return true;
                     }
-                    return true;
+
                 } else if (searchOption.filter[key].type.toLowerCase() == "date") {
 
-                    if (searchOption.filter[key].value) {
-                        return new Date(searchOption.filter[key].value).setHours(0, 0, 0, 0) == new Date(element[key]).setHours(0, 0, 0, 0)
+                    let date = new Date(valueToSearch);
+
+                    if (!(date instanceof Date && !isNaN(date))) {
+                        return false;
+                    } else if (searchOption.filter[key].value) {
+                        return new Date(searchOption.filter[key].value).setHours(0, 0, 0, 0) == date.setHours(0, 0, 0, 0)
                     } else {
                         if (
                             searchOption.filter[key].min &&
-                            (new Date(searchOption.filter[key].min).setHours(0, 0, 0, 0)) > new Date(element[key]).setHours(0, 0, 0, 0)
+                            (new Date(searchOption.filter[key].min).setHours(0, 0, 0, 0)) > date.setHours(0, 0, 0, 0)
                         ) {
                             return false;
                         }
                         if (
                             searchOption.filter[key].max &&
-                            (new Date(searchOption.filter[key].max).setHours(0, 0, 0, 0)) < new Date(element[key]).setHours(0, 0, 0, 0)
+                            (new Date(searchOption.filter[key].max).setHours(0, 0, 0, 0)) < date.setHours(0, 0, 0, 0)
                         ) {
                             return false;
                         }
                         return true;
                     }
-                    return true;
                 } else {
                     return true;
                 }
@@ -71,9 +81,15 @@ let search = (source, searchOption) => {
             searchOption.searchCols :
             Object.keys(element)
         ).forEach(key => {
-            if (String(element[key]).match(regex)) {
+            let valueToSearch = null;
+            if (key.split('.').length) {
+                key.split('.').forEach(index => { valueToSearch = valueToSearch ? valueToSearch[index] : element[index] })
+            } else {
+                valueToSearch = element[key];
+            }
+            if (String(valueToSearch).match(regex)) {
                 points++;
-                if (String(element[key]).search(regex) == 0) {
+                if (String(valueToSearch).search(regex) == 0) {
                     points++;
                 }
             }
@@ -85,21 +101,21 @@ let search = (source, searchOption) => {
     source.size = source.size ? source.size : 10;
     data = source.page ?
         data
-        .sort((a, b) => b[scoreKey] - a[scoreKey])
-        .map(element => {
-            delete element[scoreKey];
-            return element;
-        })
-        .slice(
-            source.page * source.size - source.size,
-            source.page * source.size
-        ) :
+            .sort((a, b) => b[scoreKey] - a[scoreKey])
+            .map(element => {
+                delete element[scoreKey];
+                return element;
+            })
+            .slice(
+                source.page * source.size - source.size,
+                source.page * source.size
+            ) :
         data
-        .sort((a, b) => b[scoreKey] - a[scoreKey])
-        .map(element => {
-            delete element[scoreKey];
-            return element;
-        });
+            .sort((a, b) => b[scoreKey] - a[scoreKey])
+            .map(element => {
+                delete element[scoreKey];
+                return element;
+            });
     if (searchOption && searchOption.sort) {
         if (typeof searchOption.sort == "string") {
             data = data.sort((a, b) => a[searchOption.sort] > b[searchOption.sort] ? 1 : a[searchOption.sort] < b[searchOption.sort] ? -1 : 0);
