@@ -1,3 +1,3 @@
-let search = require('./search');
+let { search, searchValue, pagination } = require('./search');
 
-module.exports = search;
+module.exports = {search , searchValue , pagination};
